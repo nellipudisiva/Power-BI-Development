@@ -5,7 +5,7 @@ Reference: `CVE-Grades_Audit_report_for_SPRING_202520_as_of_2-Feb-26.xlsx` (39 s
 
 ## Dashboard layout (page "Grade Audit")
 - Slicers: Campus, Major Code, Program, Catalog Term
-- Matrix (replicates the Excel grid): rows = student detail columns A–Q, columns = `COURSE_NAME`, value = `GRADE` (First)
+- Matrix (replicates the Excel grid): rows = Campus, HCT Id, Name, Catalog Term, credit columns, Academic Standing; columns = `COURSE_NAME`; value = `GRADE`. Comments, Program Description, Advisor are in the cell tooltip (Power BI freezes all row headers, so wide fields would block horizontal scrolling). Major/Program are slicers.
 
 ## Excel columns not in the view
 | Excel column | Status |

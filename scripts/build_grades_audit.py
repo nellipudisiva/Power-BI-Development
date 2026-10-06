@@ -24,11 +24,13 @@ ROW_FIELDS = [
     ("PROGRAM_CREDITS_REQUIRED", "Program Credits Required"),
     ("PENDING_CREDITS", "Pending Credits"),
     ("ACADEMIC_STANDING", "Academic Standing"),
-    ("ADVISOR", "Advisor"),
-    ("MAJOR_CODE", "Major Code"),
-    ("PROGRAM", "Program"),
-    ("PROGRAM_DESCRIPTION", "Program Description"),
+]
+# Power BI freezes every matrix row header, so wide text fields (Advisor is always NULL in the view,
+# Major/Program are slicers, Comments is long) go into the cell tooltip to leave room for course columns.
+TOOLTIP_FIELDS = [
     ("COMMENTS", "Comments"),
+    ("PROGRAM_DESCRIPTION", "Program Description"),
+    ("ADVISOR", "Advisor"),
 ]
 SLICERS = [
     ("CAMPUS_NAME", "Campus"),
@@ -111,9 +113,12 @@ def grade_matrix(x, y, w, h, z):
                    "Name": grade_ref, "NativeReferenceName": "Grade"})
     col_props = {qref(p): {"displayName": lbl} for p, lbl in ROW_FIELDS}
     col_props[grade_ref] = {"displayName": "Grade"}
-    # Expand every row level (equivalent to "Expand all down" to the lowest level)
-    levels = [{"queryRefs": [qref(p)], "isCollapsed": True, "isPinned": True} for p, _ in ROW_FIELDS[:-1]]
-    levels.append({"queryRefs": [qref(ROW_FIELDS[-1][0])], "isPinned": True})
+    tips = []
+    for p, lbl in TOOLTIP_FIELDS:
+        ref = f"Min({T}.{p})"
+        select.append({"Aggregation": {"Expression": col(p), "Function": 3}, "Name": ref, "NativeReferenceName": lbl})
+        col_props[ref] = {"displayName": lbl}
+        tips.append({"queryRef": ref})
     header_bg = {"solid": {"color": lit("'#F3F3F3'")}}
     cfg = {
         "name": uuid.uuid4().hex[:20],
@@ -123,6 +128,7 @@ def grade_matrix(x, y, w, h, z):
                 "Rows": rows,
                 "Columns": [{"queryRef": qref("COURSE_NAME"), "active": True}],
                 "Values": [{"queryRef": grade_ref}],
+                "Tooltips": tips,
             },
             "prototypeQuery": {
                 "Version": 2,
@@ -131,15 +137,15 @@ def grade_matrix(x, y, w, h, z):
                 "OrderBy": [{"Direction": 1, "Expression": col("STUDENT_NAME")}],
             },
             "columnProperties": col_props,
-            "expansionStates": [{"roles": ["Rows"], "levels": levels, "root": {"isToggled": True}}],
             "drillFilterOtherVisuals": True,
             "objects": {
                 "rowHeaders": [{"properties": {
                     "stepped": lit("false"),
                     "showExpandCollapseButtons": lit("false"),
                     "backColor": header_bg,
+                    "wordWrap": lit("false"),
                 }}],
-                "columnHeaders": [{"properties": {"backColor": header_bg, "wordWrap": lit("true")}}],
+                "columnHeaders": [{"properties": {"backColor": header_bg, "wordWrap": lit("false")}}],
                 "subTotals": [{"properties": {"rowSubtotals": lit("false"), "columnSubtotals": lit("false")}}],
                 "values": [{"properties": {"fontSize": lit("9D")}}],
                 "grid": [{"properties": {"gridVertical": lit("true"), "gridHorizontal": lit("true")}}],
